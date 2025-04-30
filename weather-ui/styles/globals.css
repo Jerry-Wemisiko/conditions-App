@@ -1,5 +1,3 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import "rippleui/dist/rippleui.css";
