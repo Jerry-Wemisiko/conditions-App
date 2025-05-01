@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+.font-geist-mono {
+  font-family: "Geist Mono", monospace;
+}
+
 .toggle {
   @apply h-6 w-12 rounded-full bg-gray-300 relative transition-colors duration-200;
 }
