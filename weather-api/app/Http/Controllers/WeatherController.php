@@ -7,7 +7,8 @@ use Illuminate\Http\JsonResponse;
 // 
 // This controller handles weather data retrieval from OpenWeatherMap API
 // and returns the current weather and a 3-day forecast for a given city.
-// It uses the OpenWeatherMap Geocoding API to get latitude and longitude
+// It uses the OpenWeatherMap Geocoding API to get latitude and 
+// longitude for the city, and then fetches the current weather and
 class WeatherController extends Controller
 {
     public function getWeather(Request $request): JsonResponse
