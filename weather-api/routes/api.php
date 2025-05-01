@@ -7,3 +7,7 @@ Route::get('/test', function () {
 });
 
 Route::get('/weather', [WeatherController::class, 'getWeather']);
+
+Route::get('/debug-key', function () {
+    return response()->json(['api_key' => env('OPENWEATHERMAP_API_KEY')]);
+});

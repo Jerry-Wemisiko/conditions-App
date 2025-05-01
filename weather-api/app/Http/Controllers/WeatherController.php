@@ -4,47 +4,64 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Http\JsonResponse;
-
+// 
+// This controller handles weather data retrieval from OpenWeatherMap API
+// and returns the current weather and a 3-day forecast for a given city.
+// It uses the OpenWeatherMap Geocoding API to get latitude and longitude
 class WeatherController extends Controller
 {
-    /**
-     * Fetch weather data for a given city.
-     *
-     * @param Request $request
-     * @return JsonResponse
-     */
     public function getWeather(Request $request): JsonResponse
     {
-        // Validate input
-        $request->validate([
-            'city' => 'required|string',
-            'unit' => 'nullable|string|in:metric,imperial',
+        \Log::info('WeatherController: Request received', [
+            'city' => $request->query('city'),
+            'unit' => $request->query('unit')
         ]);
 
         $city = $request->query('city');
-        $unit = $request->query('unit', 'metric'); // Default to Celsius
-        $apiKey = env('OPENWEATHERMAP_API_KEY');
+        $unit = $request->query('unit', 'metric');
 
-        // Step 1: Get coordinates using Geocoding API
-        $geoUrl = "http://api.openweathermap.org/geo/1.0/direct?q={$city}&limit=1&appid={$apiKey}";
-        $geoResponse = Http::get($geoUrl)->json();
+        if (!$city) {
+            \Log::error('WeatherController: City missing');
+            return response()->json(['error' => 'City is required'], 400);
+        }
+
+        $apiKey = env('OPENWEATHERMAP_API_KEY');
+        if (!$apiKey) {
+            \Log::error('WeatherController: API key not configured');
+            return response()->json(['error' => 'API key not configured'], 500);
+        }
+
+        // Geocoding API
+        $geoResponse = Http::get("https://api.openweathermap.org/geo/1.0/direct", [
+            'q' => $city,
+            'limit' => 1,
+            'appid' => $apiKey
+        ])->json();
 
         if (empty($geoResponse)) {
+            \Log::error('WeatherController: City not found', ['city' => $city]);
             return response()->json(['error' => 'City not found'], 404);
         }
 
         $lat = $geoResponse[0]['lat'];
         $lon = $geoResponse[0]['lon'];
 
-        // Step 2: Get current weather
-        $weatherUrl = "http://api.openweathermap.org/data/2.5/weather?lat={$lat}&lon={$lon}&units={$unit}&appid={$apiKey}";
-        $weatherResponse = Http::get($weatherUrl)->json();
+        // Current weather
+        $weatherResponse = Http::get("https://api.openweathermap.org/data/2.5/weather", [
+            'lat' => $lat,
+            'lon' => $lon,
+            'units' => $unit,
+            'appid' => $apiKey
+        ])->json();
 
-        // Step 3: Get 3-day forecast
-        $forecastUrl = "http://api.openweathermap.org/data/2.5/forecast?lat={$lat}&lon={$lon}&units={$unit}&appid={$apiKey}";
-        $forecastResponse = Http::get($forecastUrl)->json();
+        // 3-day forecast
+        $forecastResponse = Http::get("https://api.openweathermap.org/data/2.5/forecast", [
+            'lat' => $lat,
+            'lon' => $lon,
+            'units' => $unit,
+            'appid' => $apiKey
+        ])->json();
 
-        // Process forecast to get next 3 days
         $forecastData = [];
         $dates = [];
         foreach ($forecastResponse['list'] as $item) {
@@ -60,8 +77,8 @@ class WeatherController extends Controller
             }
         }
 
-        // Format response
-        $response = [
+        \Log::info('WeatherController: Response prepared', ['city' => $city]);
+        return response()->json([
             'current' => [
                 'temperature' => $weatherResponse['main']['temp'],
                 'description' => $weatherResponse['weather'][0]['description'],
@@ -73,8 +90,6 @@ class WeatherController extends Controller
             ],
             'forecast' => $forecastData,
             'unit' => $unit,
-        ];
-
-        return response()->json($response);
+        ]);
     }
 }
