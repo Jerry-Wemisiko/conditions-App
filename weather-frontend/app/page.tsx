@@ -24,14 +24,16 @@ interface WeatherData {
 
 export default function Home() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
-  const [city, setCity] = useState("New York");
+  const [city, setCity] = useState("Nairobi");
   const [unit, setUnit] = useState<"metric" | "imperial">("metric");
   const [error, setError] = useState("");
 
   const fetchWeather = async () => {
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/weather?city=${encodeURIComponent(city)}&unit=${unit}`
+        `http://127.0.0.1:8000/api/weather?city=${encodeURIComponent(
+          city
+        )}&unit=${unit}`
       );
       if (!response.ok) throw new Error("Failed to fetch weather");
       const data: WeatherData = await response.json();
@@ -49,7 +51,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gray-100 p-4">
-      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Left Panel: WeatherSummary */}
         <div className="md:col-span-1">
           {weather && <WeatherSummary current={weather.current} unit={unit} />}
@@ -57,22 +59,45 @@ export default function Home() {
         </div>
 
         {/* Right Panel */}
-        <div className="md:col-span-1 flex flex-col gap-4">
+        <div className="md:col-span-1 flex flex-col gap-6 bg-yellow-200">
           {/* Top: SearchBar and UnitToggle */}
-          <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
             <div className="flex-1">
-              <SearchBar city={city} setCity={setCity} onSearch={fetchWeather} />
+              <SearchBar
+                city={city}
+                setCity={setCity}
+                onSearch={fetchWeather}
+              />
             </div>
             <UnitToggle unit={unit} setUnit={setUnit} />
           </div>
 
           {/* Middle: ForecastCards */}
-          {weather && <ForecastCards forecast={weather.forecast} unit={unit} />}
+          {weather ? (
+            <ForecastCards forecast={weather.forecast} unit={unit} />
+          ) : (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              Loading forecast...
+            </div>
+          )}
 
           {/* Bottom: WindInfo and HumidityInfo */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {weather && <WindInfo windSpeed={weather.current.wind_speed} unit={unit} />}
-            {weather && <HumidityInfo humidity={weather.current.humidity} />}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {weather ? (
+              <>
+                <WindInfo windSpeed={weather.current.wind_speed} unit={unit} />
+                <HumidityInfo humidity={weather.current.humidity} />
+              </>
+            ) : (
+              <>
+                <div className="bg-white rounded-lg shadow-md p-4 text-center">
+                  Loading wind...
+                </div>
+                <div className="bg-white rounded-lg shadow-md p-4 text-center">
+                  Loading humidity...
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>

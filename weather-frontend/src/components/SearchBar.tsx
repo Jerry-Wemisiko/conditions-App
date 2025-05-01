@@ -18,8 +18,8 @@ export default function SearchBar({ city, setCity, onSearch }: SearchBarProps) {
         type="text"
         value={city}
         onChange={(e) => setCity(e.target.value)}
-        placeholder="Enter city"
-        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 p-2"
+        placeholder="Search city..."
+        className="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50 p-2 text-sm"
       />
     </form>
   );
