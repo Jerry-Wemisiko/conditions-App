@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import SearchBar from "../src/components/SearchBar";
 import UnitToggle from "../src/components/UnitToggle";
 import WeatherSummary from "../src/components/WeatherSummary";
@@ -29,38 +29,42 @@ export default function Home() {
   const [error, setError] = useState("");
   const [isMobile, setIsMobile] = useState(false);
 
-  // Handle responsive layout based on screen width
+  // Handle responsive layout
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
-    handleResize(); // Initial check
+    handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const fetchWeather = async () => {
+  const fetchWeather = useCallback(async () => {
     try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/api/weather?city=${encodeURIComponent(city)}&unit=${unit}`,
-        { mode: "cors" }
-      );
+      const url = `http://127.0.0.1:8000/api/weather?city=${encodeURIComponent(city)}&unit=${unit}`;
+      console.log('Fetching weather from:', url);
+      const response = await fetch(url, { mode: "cors" });
       if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+        throw new Error(
+          response.status === 404
+            ? `City not found or API endpoint unavailable (URL: ${url})`
+            : `HTTP error! Status: ${response.status}`
+        );
       }
       const data: WeatherData = await response.json();
       setWeather(data);
       setError("");
-    } catch (err: any) {
-      console.error("Frontend: Fetch error:", err.message);
-      setError(err.message || "Failed to fetch weather data");
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch weather data";
+      console.error("Frontend: Fetch error:", errorMessage);
+      setError(errorMessage);
       setWeather(null);
     }
-  };
+  }, [city, unit]);
 
   useEffect(() => {
     fetchWeather();
-  }, [city, unit]);
+  }, [city, unit, fetchWeather]);
 
   return (
     <>
@@ -73,6 +77,10 @@ export default function Home() {
             width: 100%;
             height: 100%;
             overflow-x: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          }
+          * {
+            box-sizing: border-box;
           }
         `}
       </style>
@@ -80,24 +88,24 @@ export default function Home() {
       <main
         style={{
           minHeight: "100vh",
-          background: "linear-gradient(135deg, #74ebd5 0%, #acb6e5 100%)",
-          padding: isMobile ? "16px" : "24px",
+          background: "linear-gradient(135deg, #6dd5fa 0%, #2980b9 100%)",
+          padding: isMobile ? "16px" : "32px",
           display: "flex",
           flexDirection: "column",
           width: "100vw",
-          boxSizing: "border-box",
-          margin: 0,
+          color: "#1a202c",
         }}
       >
         {/* Title */}
         <h1
           style={{
-            fontSize: isMobile ? "28px" : "36px",
-            fontWeight: "700",
+            fontSize: isMobile ? "32px" : "40px",
+            fontWeight: "800",
             color: "#ffffff",
             textAlign: "center",
-            textShadow: "2px 2px 4px rgba(0, 0, 0, 0.2)",
-            marginBottom: "24px",
+            textShadow: "2px 2px 8px rgba(0, 0, 0, 0.3)",
+            marginBottom: "32px",
+            letterSpacing: "1px",
           }}
         >
           Weather-App
@@ -109,48 +117,55 @@ export default function Home() {
             margin: "0 auto",
             display: "grid",
             gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-            gap: "24px",
+            gap: "32px",
             flex: 1,
             width: "100%",
+            maxWidth: "1200px",
           }}
         >
           {/* Left Panel: WeatherSummary */}
           <div
             style={{
-              background: "linear-gradient(145deg, #ffffff, #e6e6e6)",
-              borderRadius: "16px",
-              boxShadow: "0 8px 16px rgba(0, 0, 0, 0.15)",
-              padding: isMobile ? "16px" : "24px",
-              transition: "transform 0.3s ease",
+              background: "rgba(255, 255, 255, 0.95)",
+              borderRadius: "24px",
+              boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+              padding: isMobile ? "20px" : "32px",
+              transition: "transform 0.3s ease, box-shadow 0.3s ease",
+              backdropFilter: "blur(10px)",
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "scale(1.02)";
+              e.currentTarget.style.boxShadow = "0 16px 32px rgba(0, 0, 0, 0.2)";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "0 12px 24px rgba(0, 0, 0, 0.15)";
+            }}
           >
             {weather ? (
               <WeatherSummary current={weather.current} unit={unit} isMobile={isMobile} />
             ) : (
-              <p style={{ color: "#6b7280", textAlign: "center" }}>Loading weather...</p>
+              <p style={{ color: "#6b7280", textAlign: "center", fontSize: "16px", fontWeight: "500" }}>
+                Loading weather...
+              </p>
             )}
-            {error && <p style={{ color: "#ef4444", marginTop: "16px", textAlign: "center" }}>{error}</p>}
+            {error && (
+              <p style={{ color: "#ef4444", marginTop: "16px", textAlign: "center", fontSize: "14px", fontWeight: "500" }}>
+                {error}
+              </p>
+            )}
           </div>
 
           {/* Right Panel */}
-          <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
-            {/* Top: SearchBar and UnitToggle */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "32px" }}>
+            {/* Top: SearchBar and UnitToggle Side by Side */}
             <div
               style={{
-                background: "linear-gradient(145deg, #ffffff, #e6e6e6)",
-                borderRadius: "16px",
-                boxShadow: "0 8px 16px rgba(0, 0, 0, 0.15)",
-                padding: "16px",
                 display: "flex",
                 flexDirection: isMobile ? "column" : "row",
+                gap: "16px",
                 alignItems: isMobile ? "stretch" : "center",
-                gap: "12px",
-                transition: "transform 0.3s ease",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
             >
               <div style={{ flex: 1 }}>
                 <SearchBar city={city} setCity={setCity} onSearch={fetchWeather} isMobile={isMobile} />
@@ -161,19 +176,28 @@ export default function Home() {
             {/* Middle: ForecastCards */}
             <div
               style={{
-                background: "linear-gradient(145deg, #ffffff, #e6e6e6)",
-                borderRadius: "16px",
-                boxShadow: "0 8px 16px rgba(0, 0, 0, 0.15)",
+                background: "rgba(255, 255, 255, 0.95)",
+                borderRadius: "24px",
+                boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
                 padding: "24px",
-                transition: "transform 0.3s ease",
+                transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                backdropFilter: "blur(10px)",
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
-              onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "scale(1.02)";
+                e.currentTarget.style.boxShadow = "0 16px 32px rgba(0, 0, 0, 0.2)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "scale(1)";
+                e.currentTarget.style.boxShadow = "0 12px 24px rgba(0, 0, 0, 0.15)";
+              }}
             >
               {weather ? (
                 <ForecastCards forecast={weather.forecast} unit={unit} isMobile={isMobile} />
               ) : (
-                <p style={{ color: "#6b7280", textAlign: "center" }}>Loading forecast...</p>
+                <p style={{ color: "#6b7280", textAlign: "center", fontSize: "16px", fontWeight: "500" }}>
+                  Loading forecast...
+                </p>
               )}
             </div>
 
@@ -182,41 +206,59 @@ export default function Home() {
               style={{
                 display: "grid",
                 gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
-                gap: "24px",
+                gap: "32px",
               }}
             >
               <div
                 style={{
-                  background: "linear-gradient(145deg, #ffffff, #e6e6e6)",
-                  borderRadius: "16px",
-                  boxShadow: "0 8px 16px rgba(0, 0, 0, 0.15)",
-                  padding: "16px",
-                  transition: "transform 0.3s ease",
+                  background: "rgba(255, 255, 255, 0.95)",
+                  borderRadius: "24px",
+                  boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+                  padding: "20px",
+                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                  backdropFilter: "blur(10px)",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.02)";
+                  e.currentTarget.style.boxShadow = "0 16px 32px rgba(0, 0, 0, 0.2)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = "0 12px 24px rgba(0, 0, 0, 0.15)";
+                }}
               >
                 {weather ? (
                   <WindInfo windSpeed={weather.current.wind_speed} unit={unit} isMobile={isMobile} />
                 ) : (
-                  <p style={{ color: "#6b7280", textAlign: "center" }}>Loading wind...</p>
+                  <p style={{ color: "#6b7280", textAlign: "center", fontSize: "16px", fontWeight: "500" }}>
+                    Loading wind...
+                  </p>
                 )}
               </div>
               <div
                 style={{
-                  background: "linear-gradient(145deg, #ffffff, #e6e6e6)",
-                  borderRadius: "16px",
-                  boxShadow: "0 8px 16px rgba(0, 0, 0, 0.15)",
-                  padding: "16px",
-                  transition: "transform 0.3s ease",
+                  background: "rgba(255, 255, 255, 0.95)",
+                  borderRadius: "24px",
+                  boxShadow: "0 12px 24px rgba(0, 0, 0, 0.15)",
+                  padding: "20px",
+                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                  backdropFilter: "blur(10px)",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.02)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "scale(1.02)";
+                  e.currentTarget.style.boxShadow = "0 16px 32px rgba(0, 0, 0, 0.2)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "scale(1)";
+                  e.currentTarget.style.boxShadow = "0 12px 24px rgba(0, 0, 0, 0.15)";
+                }}
               >
                 {weather ? (
                   <HumidityInfo humidity={weather.current.humidity} isMobile={isMobile} />
                 ) : (
-                  <p style={{ color: "#6b7280", textAlign: "center" }}>Loading humidity...</p>
+                  <p style={{ color: "#6b7280", textAlign: "center", fontSize: "16px", fontWeight: "500" }}>
+                    Loading humidity...
+                  </p>
                 )}
               </div>
             </div>
@@ -226,15 +268,16 @@ export default function Home() {
         {/* Footer */}
         <footer
           style={{
-            marginTop: "24px",
+            marginTop: "32px",
             textAlign: "center",
             color: "#ffffff",
-            fontSize: isMobile ? "12px" : "14px",
-            textShadow: "1px 1px 2px rgba(0, 0, 0, 0.2)",
+            fontSize: isMobile ? "14px" : "16px",
+            textShadow: "1px 1px 4px rgba(0, 0, 0, 0.3)",
             padding: "16px 0",
+            fontWeight: "500",
           }}
         >
-          Developed by Skyles
+          Developed by Skyles | Powered by OpenWeatherMap
         </footer>
       </main>
     </>

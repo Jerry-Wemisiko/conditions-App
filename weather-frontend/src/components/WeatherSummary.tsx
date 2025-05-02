@@ -1,3 +1,5 @@
+import Image from "next/image";
+
 interface WeatherSummaryProps {
   current: {
     temperature: number;
@@ -18,34 +20,41 @@ export default function WeatherSummary({ current, unit, isMobile }: WeatherSumma
   });
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", minHeight: "100%", justifyContent: "space-between" }}>
-      <div style={{ textAlign: "center" }}>
-        <img
+    <div
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: "100%",
+        justifyContent: "space-between",
+        textAlign: "center",
+      }}
+    >
+      <div>
+        <Image
           src={`http://openweathermap.org/img/wn/${current.icon}@2x.png`}
           alt="Weather"
-          style={{
-            width: isMobile ? "80px" : "100px",
-            height: isMobile ? "80px" : "100px",
-            margin: isMobile ? "12px auto" : "16px auto",
-            filter: "drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2))",
-          }}
+          width={isMobile ? 80 : 120}
+          height={isMobile ? 80 : 120}
+          style={{ margin: "20px auto", filter: "drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))" }}
         />
         <p
           style={{
-            fontSize: isMobile ? "36px" : "48px",
-            fontWeight: "700",
-            color: "#1f2937",
-            marginBottom: "8px",
+            fontSize: isMobile ? "40px" : "56px",
+            fontWeight: "800",
+            color: "#1a202c",
+            marginBottom: "12px",
+            lineHeight: "1",
           }}
         >
           {Math.round(current.temperature)}°{unit === "metric" ? "C" : "F"}
         </p>
         <p
           style={{
-            fontSize: isMobile ? "16px" : "20px",
+            fontSize: isMobile ? "18px" : "22px",
             color: "#4b5563",
             textTransform: "capitalize",
             fontStyle: "italic",
+            fontWeight: "500",
           }}
         >
           {current.description}
@@ -56,8 +65,8 @@ export default function WeatherSummary({ current, unit, isMobile }: WeatherSumma
           color: "#6b7280",
           fontSize: isMobile ? "14px" : "16px",
           marginTop: "auto",
-          textAlign: "center",
           fontWeight: "500",
+          letterSpacing: "0.5px",
         }}
       >
         {formattedDate} | {current.location}
