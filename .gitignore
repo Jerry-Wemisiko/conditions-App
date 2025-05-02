@@ -1,0 +1,40 @@
+# Laravel specific
+/vendor
+/node_modules
+/public/hot
+/public/storage
+/storage/*.key
+/.idea
+/.vscode
+/.phpunit.result.cache
+/.env
+.env.*
+Homestead.yaml
+Homestead.json
+npm-debug.log
+yarn-error.log
+.phpunit.result.cache
+.phpunit.cache
+# Ignore Mac system files
+.DS_Store
+
+# Ignore Laravel Mix generated files
+/public/css
+/public/js
+/public/mix-manifest.json
+
+# Composer
+composer.lock
+
+# Ignore storage except .gitkeep
+/storage/app/*
+!/storage/app/.gitkeep
+
+/storage/framework/*
+!/storage/framework/.gitkeep
+!/storage/framework/sessions
+!/storage/framework/views
+!/storage/framework/cache
+
+/storage/logs/*
+!/storage/logs/.gitkeep
